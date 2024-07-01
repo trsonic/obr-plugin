@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.24.1)
 
 # This tells cmake we have goodies in the /cmake folder
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-include (PamplejuceVersion)
+include(PamplejuceVersion)
 
 # Configures universal binaries and decides which version of macOS to support
 include(PamplejuceMacOS)
@@ -36,6 +36,8 @@ set(FORMATS Standalone AU VST3 AUv3)
 # For simplicity, the name of the CMake project is also the name of the target
 project(${PROJECT_NAME} VERSION ${CURRENT_VERSION})
 
+set(CMAKE_CXX_STANDARD 20)
+
 # Couple tweaks that IMO should be JUCE defaults
 include(JUCEDefaults)
 
@@ -49,36 +51,36 @@ add_subdirectory(JUCE)
 # juce_add_module(modules/my_module)
 
 # This adds the melatonin inspector module
-add_subdirectory (modules/melatonin_inspector)
+add_subdirectory(modules/melatonin_inspector)
 
 # See `docs/CMake API.md` in the JUCE repo for all config options
 juce_add_plugin("${PROJECT_NAME}"
-    # Icons for the standalone app
-    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/packaging/icon.png"
+        # Icons for the standalone app
+        ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/packaging/icon.png"
 
-    # Change me!
-    COMPANY_NAME "${COMPANY_NAME}"
-    BUNDLE_ID "${BUNDLE_ID}"
+        # Change me!
+        COMPANY_NAME "${COMPANY_NAME}"
+        BUNDLE_ID "${BUNDLE_ID}"
 
-    # On MacOS, plugin is copied to ~/Users/yourname/Library/Audio/Plug-Ins/
-    COPY_PLUGIN_AFTER_BUILD TRUE
+        # On MacOS, plugin is copied to ~/Users/yourname/Library/Audio/Plug-Ins/
+        COPY_PLUGIN_AFTER_BUILD TRUE
 
-    # Change me!
-    # A four-character plugin id
-    # First character MUST be uppercase for AU formats
-    PLUGIN_MANUFACTURER_CODE Pamp
+        # Change me!
+        # A four-character plugin id
+        # First character MUST be uppercase for AU formats
+        PLUGIN_MANUFACTURER_CODE Pamp
 
-    # Change me!
-    # A unique four-character plugin id
-    # Note: this must have at least one upper-case character
-    PLUGIN_CODE P001
-    FORMATS "${FORMATS}"
+        # Change me!
+        # A unique four-character plugin id
+        # Note: this must have at least one upper-case character
+        PLUGIN_CODE P001
+        FORMATS "${FORMATS}"
 
-    # The name of your final executable
-    # This is how it's listed in the DAW
-    # This can be different from PROJECT_NAME and can have spaces!
-    # You might want to use v${MAJOR_VERSION} here once you go to v2...
-    PRODUCT_NAME "${PRODUCT_NAME}")
+        # The name of your final executable
+        # This is how it's listed in the DAW
+        # This can be different from PROJECT_NAME and can have spaces!
+        # You might want to use v${MAJOR_VERSION} here once you go to v2...
+        PRODUCT_NAME "${PRODUCT_NAME}")
 
 # This lets us use our code in both the JUCE targets and our Test target
 # Without running into ODR violations
@@ -87,6 +89,32 @@ add_library(SharedCode INTERFACE)
 # C++20, please
 # Use cxx_std_23 for C++23 (as of CMake v 3.20)
 target_compile_features(SharedCode INTERFACE cxx_std_20)
+
+# Set the path to the Bazel output directory
+set(BAZEL_OUTPUT_DIR "/Users/tr/repos/libiamfbr-draft/bazel-bin")
+
+# Add the static libraries built by Bazel and header files
+add_library(libiamfbr STATIC IMPORTED)
+set_target_properties(libiamfbr PROPERTIES IMPORTED_LOCATION ${BAZEL_OUTPUT_DIR}/liblibiamfbr.a)
+include_directories(/Users/tr/repos/libiamfbr-draft/src)
+
+add_library(binaural_filters STATIC IMPORTED)
+set_target_properties(binaural_filters PROPERTIES IMPORTED_LOCATION ${BAZEL_OUTPUT_DIR}/libbinaural_filters.a)
+include_directories(/Users/tr/repos/libiamfbr-draft/src/binaural_filters)
+
+add_library(pffft STATIC IMPORTED)
+set_target_properties(pffft PROPERTIES IMPORTED_LOCATION ${BAZEL_OUTPUT_DIR}/external/pffft/libpffft.a)
+include_directories(/Users/tr/repos/libiamfbr-draft/bazel-libiamfbr-draft/external/pffft)
+
+# fetch Abseil library
+include(FetchContent)
+FetchContent_Declare(
+        absl
+        GIT_REPOSITORY https://github.com/abseil/abseil-cpp.git
+        GIT_TAG 7e149e40c7a2d8049ecd28d1f83f64cc197cc128
+)
+FetchContent_MakeAvailable(absl)
+
 
 # Manually list all .h and .cpp files for the plugin
 # If you are like me, you'll use globs for your sanity.
@@ -104,22 +132,22 @@ include(XcodePrettify)
 
 # This is where you can set preprocessor definitions for JUCE and your plugin
 target_compile_definitions(SharedCode
-    INTERFACE
+        INTERFACE
 
-    # JUCE_WEB_BROWSER and JUCE_USE_CURL off by default
-    JUCE_WEB_BROWSER=0  # If you set this to 1, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_plugin` call
-    JUCE_USE_CURL=0     # If you set this to 1, add `NEEDS_CURL TRUE` to the `juce_add_plugin` call
-    JUCE_VST3_CAN_REPLACE_VST2=0
+        # JUCE_WEB_BROWSER and JUCE_USE_CURL off by default
+        JUCE_WEB_BROWSER=0  # If you set this to 1, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_plugin` call
+        JUCE_USE_CURL=0     # If you set this to 1, add `NEEDS_CURL TRUE` to the `juce_add_plugin` call
+        JUCE_VST3_CAN_REPLACE_VST2=0
 
-    # Uncomment if you are paying for a an Indie/Pro license or releasing under GPLv3
-    # JUCE_DISPLAY_SPLASH_SCREEN=0
+        # Uncomment if you are paying for a an Indie/Pro license or releasing under GPLv3
+        # JUCE_DISPLAY_SPLASH_SCREEN=0
 
-    # lets the app known if we're Debug or Release
-    CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
-    VERSION="${CURRENT_VERSION}"
+        # lets the app known if we're Debug or Release
+        CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
+        VERSION="${CURRENT_VERSION}"
 
-    # JucePlugin_Name is for some reason doesn't use the nicer PRODUCT_NAME
-    PRODUCT_NAME_WITHOUT_VERSION="IAMFBR"
+        # JucePlugin_Name is for some reason doesn't use the nicer PRODUCT_NAME
+        PRODUCT_NAME_WITHOUT_VERSION="IAMFBR"
 )
 
 # Link to any other modules you added (with juce_add_module) here!
@@ -128,20 +156,28 @@ target_compile_definitions(SharedCode
 # However, with Pamplejuce, you'll link modules to SharedCode with INTERFACE visibility
 # This allows the JUCE plugin targets and the Tests target to link against it
 target_link_libraries(SharedCode
-    INTERFACE
-    Assets
-    melatonin_inspector
-    juce_audio_utils
-    juce_audio_processors
-    juce_dsp
-    juce_gui_basics
-    juce_gui_extra
-    juce::juce_recommended_config_flags
-    juce::juce_recommended_lto_flags
-    juce::juce_recommended_warning_flags)
+        INTERFACE
+        Assets
+        melatonin_inspector
+        juce_audio_utils
+        juce_audio_processors
+        juce_dsp
+        juce_gui_basics
+        juce_gui_extra
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_lto_flags
+        juce::juce_recommended_warning_flags)
 
 # Link the JUCE plugin targets our SharedCode target
-target_link_libraries("${PROJECT_NAME}" PRIVATE SharedCode)
+target_link_libraries("${PROJECT_NAME}" PRIVATE
+        SharedCode
+        libiamfbr
+        binaural_filters
+        pffft
+        absl::base
+        absl::log
+        absl::log_internal_message
+        absl::log_internal_check_op)
 
 # IPP support, comment out to disable
 include(PamplejuceIPP)

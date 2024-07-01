@@ -18,6 +18,19 @@ PluginEditor::PluginEditor (PluginProcessor& p)
         inspector->setVisible (true);
     };
 
+    // add the input type selection box to the editor
+    addAndMakeVisible(inputTypeSelectComboBox);
+    inputTypeSelectComboBox.addItem("Mono", 1);
+    inputTypeSelectComboBox.addItem("Stereo", 2);
+    inputTypeSelectComboBox.addItem("5.1", 3);
+    inputTypeSelectComboBox.addItem("7.1.4", 4);
+    inputTypeSelectComboBox.addItem("3OA", 5);
+    inputTypeSelectComboBox.addItem("7OA", 6);
+    inputTypeSelectComboBox.onChange = [this]() {
+        DBG("selected " + juce::String(inputTypeSelectComboBox.getSelectedId()));
+    };
+    inputTypeSelectComboBox.setSelectedId(5, juce::sendNotification);
+
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     setSize (400, 300);
@@ -45,4 +58,7 @@ void PluginEditor::resized()
     auto area = getLocalBounds();
     area.removeFromBottom(50);
     inspectButton.setBounds (getLocalBounds().withSizeKeepingCentre(100, 50));
+
+    inputTypeSelectComboBox.setBounds(20,20,100,25);
+
 }

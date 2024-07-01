@@ -4,21 +4,24 @@
 //==============================================================================
 PluginProcessor::PluginProcessor()
     : AudioProcessor (BusesProperties()
-                          .withInput ("Front Left", juce::AudioChannelSet::mono(), true)
-                          .withInput ("Front Right", juce::AudioChannelSet::mono(), true)
-                          .withInput ("Center", juce::AudioChannelSet::mono(), true)
-                          .withInput ("LFE", juce::AudioChannelSet::mono(), true)
-                          .withInput ("Side Left", juce::AudioChannelSet::mono(), true)
-                          .withInput ("Side Right", juce::AudioChannelSet::mono(), true)
-                          .withInput ("Back Left", juce::AudioChannelSet::mono(), true)
-                          .withInput ("Back Right", juce::AudioChannelSet::mono(), true)
-                          .withInput ("Top Front Left", juce::AudioChannelSet::mono(), true)
-                          .withInput ("Top Front Right", juce::AudioChannelSet::mono(), true)
-                          .withInput ("Top Back Left", juce::AudioChannelSet::mono(), true)
-                          .withInput ("Top Back Right", juce::AudioChannelSet::mono(), true)
-                          .withOutput ("Output", juce::AudioChannelSet::stereo(), true))
+                          .withInput ("Input", juce::AudioChannelSet::discreteChannels (16), true)
+                          .withOutput ("Output", juce::AudioChannelSet::discreteChannels (2), true)
+          //          BusesProperties()
+          //                          .withInput ("Front Left", juce::AudioChannelSet::mono(), true)
+          //                          .withInput ("Front Right", juce::AudioChannelSet::mono(), true)
+          //                          .withInput ("Center", juce::AudioChannelSet::mono(), true)
+          //                          .withInput ("LFE", juce::AudioChannelSet::mono(), true)
+          //                          .withInput ("Side Left", juce::AudioChannelSet::mono(), true)
+          //                          .withInput ("Side Right", juce::AudioChannelSet::mono(), true)
+          //                          .withInput ("Back Left", juce::AudioChannelSet::mono(), true)
+          //                          .withInput ("Back Right", juce::AudioChannelSet::mono(), true)
+          //                          .withInput ("Top Front Left", juce::AudioChannelSet::mono(), true)
+          //                          .withInput ("Top Front Right", juce::AudioChannelSet::mono(), true)
+          //                          .withInput ("Top Back Left", juce::AudioChannelSet::mono(), true)
+          //                          .withInput ("Top Back Right", juce::AudioChannelSet::mono(), true)
+          //                          .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
+      )
 {
-
     // setup constructor
 }
 
@@ -34,29 +37,29 @@ const juce::String PluginProcessor::getName() const
 
 bool PluginProcessor::acceptsMidi() const
 {
-   #if JucePlugin_WantsMidiInput
+#if JucePlugin_WantsMidiInput
     return true;
-   #else
+#else
     return false;
-   #endif
+#endif
 }
 
 bool PluginProcessor::producesMidi() const
 {
-   #if JucePlugin_ProducesMidiOutput
+#if JucePlugin_ProducesMidiOutput
     return true;
-   #else
+#else
     return false;
-   #endif
+#endif
 }
 
 bool PluginProcessor::isMidiEffect() const
 {
-   #if JucePlugin_IsMidiEffect
+#if JucePlugin_IsMidiEffect
     return true;
-   #else
+#else
     return false;
-   #endif
+#endif
 }
 
 double PluginProcessor::getTailLengthSeconds() const
@@ -66,8 +69,8 @@ double PluginProcessor::getTailLengthSeconds() const
 
 int PluginProcessor::getNumPrograms()
 {
-    return 1;   // NB: some hosts don't cope very well if you tell them there are 0 programs,
-                // so this should be at least 1, even if you're not really implementing programs.
+    return 1; // NB: some hosts don't cope very well if you tell them there are 0 programs,
+        // so this should be at least 1, even if you're not really implementing programs.
 }
 
 int PluginProcessor::getCurrentProgram()
@@ -96,11 +99,10 @@ void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
-    juce::ignoreUnused (sampleRate, samplesPerBlock);
+//    juce::ignoreUnused (sampleRate, samplesPerBlock);
 
     // initialize IAMF BR ..................
-
-
+    iamfbr::libiamfbr libiamfbr_obj(samplesPerBlock, sampleRate, 3, 4096);
 }
 
 void PluginProcessor::releaseResources()
@@ -117,7 +119,7 @@ bool PluginProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 
     for (int bus_index = 0; bus_index < numberOfBuses; bus_index++)
     {
-        if (layouts.getChannelSet (true,bus_index) != juce::AudioChannelSet::mono())
+        if (layouts.getChannelSet (true, bus_index) != juce::AudioChannelSet::mono())
             return false;
     }
 
@@ -128,12 +130,12 @@ bool PluginProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 }
 
 void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
-                                              juce::MidiBuffer& midiMessages)
+    juce::MidiBuffer& midiMessages)
 {
     juce::ignoreUnused (midiMessages);
 
     juce::ScopedNoDenormals noDenormals;
-    auto totalNumInputChannels  = getTotalNumInputChannels();
+    auto totalNumInputChannels = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
     // // In case we have more outputs than inputs, this code clears any output
@@ -146,8 +148,6 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     //     buffer.clear (i, 0, buffer.getNumSamples());
 
     // process block using IAMF BR ..........
-
-
 
     // // This is the place where you'd normally do the guts of your plugin's
     // // audio processing...
