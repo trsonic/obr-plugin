@@ -2,7 +2,7 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
-#include "libiamfbr.h"
+#include "iamfbr_wrapper.h"
 
 #if (MSVC)
 #include "ipps.h"
@@ -12,7 +12,7 @@ class PluginProcessor : public juce::AudioProcessor
 {
 public:
     PluginProcessor();
-    ~PluginProcessor() override;
+    ~PluginProcessor() override = default;
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
@@ -41,5 +41,8 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
 private:
+
+    iamfbrWrapper iamfbr_;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)
 };

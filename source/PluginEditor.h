@@ -9,7 +9,7 @@ class PluginEditor : public juce::AudioProcessorEditor
 {
 public:
     explicit PluginEditor (PluginProcessor&);
-    ~PluginEditor() override;
+    ~PluginEditor() override = default;
 
     //==============================================================================
     void paint (juce::Graphics&) override;
