@@ -1,17 +1,14 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-//==============================================================================
 PluginProcessor::PluginProcessor()
     : AudioProcessor (BusesProperties()
-                          //                          .withInput ("Input", juce::AudioChannelSet::discreteChannels(64), true)
-                          //                          .withOutput ("Output", juce::AudioChannelSet::discreteChannels(2), true)
-                          .withInput ("Input", juce::AudioChannelSet::ambisonic (7), true)
-                          .withOutput ("Output", juce::AudioChannelSet::stereo(), true))
+                          // discreteChannels doesn't work well with VST3, but it's OK for testing
+                          .withInput ("Input", juce::AudioChannelSet::discreteChannels (64), true)
+                          .withOutput ("Output", juce::AudioChannelSet::discreteChannels (2), true))
 {
 }
 
-//==============================================================================
 const juce::String PluginProcessor::getName() const
 {
     return JucePlugin_Name;
@@ -85,30 +82,6 @@ void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 void PluginProcessor::releaseResources()
 {
     iamfbr_.deinitialize();
-}
-
-bool PluginProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
-{
-    //#if JucePlugin_IsMidiEffect
-    //    juce::ignoreUnused (layouts);
-    //    return true;
-    //#else
-    //    // This is the place where you check if the layout is supported.
-    //    // In this template code we only support mono or stereo.
-    //    if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
-    //        && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
-    //        return false;
-    //
-    //        // This checks if the input layout matches the output layout
-    //    #if ! JucePlugin_IsSynth
-    //    if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
-    //        return false;
-    //    #endif
-    //
-    //    return true;
-    //#endif
-
-    return true;
 }
 
 void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,

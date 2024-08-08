@@ -91,19 +91,27 @@ add_library(SharedCode INTERFACE)
 target_compile_features(SharedCode INTERFACE cxx_std_20)
 
 # Set the path to the Bazel output directory
-set(BAZEL_OUTPUT_DIR "/Users/tr/repos/libiamfbr-draft/bazel-bin")
+set(BAZEL_OUTPUT_DIR "/Users/tr/repos/libiamfbr-draft/bazel-bin/")
+set(IAMFBR_SRC_DIR "/Users/tr/repos/libiamfbr-draft/src/")
 
 # Add the static libraries built by Bazel and header files
 add_library(libiamfbr STATIC IMPORTED)
-set_target_properties(libiamfbr PROPERTIES IMPORTED_LOCATION ${BAZEL_OUTPUT_DIR}/liblibiamfbr.a)
-include_directories(/Users/tr/repos/libiamfbr-draft/src)
+set_target_properties(libiamfbr PROPERTIES IMPORTED_LOCATION ${BAZEL_OUTPUT_DIR}/src/liblibiamfbr.a)
+
+add_library(ambisonic_encoder STATIC IMPORTED)
+set_target_properties(ambisonic_encoder PROPERTIES IMPORTED_LOCATION ${BAZEL_OUTPUT_DIR}/src/libambisonic_encoder.a)
+
+add_library(ambisonic_binaural_decoder STATIC IMPORTED)
+set_target_properties(ambisonic_binaural_decoder PROPERTIES IMPORTED_LOCATION ${BAZEL_OUTPUT_DIR}/src/libambisonic_binaural_decoder.a)
 
 add_library(binaural_filters STATIC IMPORTED)
-set_target_properties(binaural_filters PROPERTIES IMPORTED_LOCATION ${BAZEL_OUTPUT_DIR}/libbinaural_filters.a)
-include_directories(/Users/tr/repos/libiamfbr-draft/src/binaural_filters)
+set_target_properties(binaural_filters PROPERTIES IMPORTED_LOCATION ${BAZEL_OUTPUT_DIR}/src/libbinaural_filters.a)
 
 add_library(pffft STATIC IMPORTED)
 set_target_properties(pffft PROPERTIES IMPORTED_LOCATION ${BAZEL_OUTPUT_DIR}/external/pffft/libpffft.a)
+
+include_directories(${IAMFBR_SRC_DIR})
+include_directories(${IAMFBR_SRC_DIR}/binaural_filters)
 include_directories(/Users/tr/repos/libiamfbr-draft/bazel-libiamfbr-draft/external/pffft)
 
 # fetch Abseil library
@@ -115,6 +123,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(absl)
 
+# fetch eigen library
+include(FetchContent)
+FetchContent_Declare(
+        eigen
+        GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
+        GIT_TAG 3147391d946bb4b6c68edd901f2add6ac1f31f8c
+)
+FetchContent_MakeAvailable(eigen)
 
 # Manually list all .h and .cpp files for the plugin
 # If you are like me, you'll use globs for your sanity.
@@ -173,7 +189,10 @@ target_link_libraries("${PROJECT_NAME}" PRIVATE
         SharedCode
         libiamfbr
         binaural_filters
+        ambisonic_binaural_decoder
+        ambisonic_encoder
         pffft
+        eigen
         absl::base
         absl::log
         absl::log_internal_message

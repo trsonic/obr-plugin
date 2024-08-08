@@ -2,7 +2,7 @@
 // Created by Tomasz Rudzki on 02/07/2024.
 //
 
-#include "libiamfbr.h"
+#include "iamfbr_impl.h"
 
 #ifndef IAMFBR_IAMFBR_WRAPPER_H
     #define IAMFBR_IAMFBR_WRAPPER_H
@@ -18,8 +18,8 @@ public:
 
     void initialize()
     {
-        libiamfbr_ = std::make_unique<iamfbr::libiamfbr> (
-            bs, fs, operational_ambisonic_order, requested_filter_length);
+        libiamfbr_ = std::make_unique<iamfbr::iamfbr_impl> (
+            bs, fs, iamfbr::InputType::k7OA);
     }
 
     void deinitialize()
@@ -45,35 +45,53 @@ public:
         int numChannels = buffer.getNumChannels();
         int number_of_ears = 2;
 
-        // declare int16_t buffers
-        std::vector<int16_t> input_buffer_int16(buffer.getNumSamples() * buffer.getNumChannels());
-        std::vector<int16_t> output_buffer_int16(buffer.getNumSamples() * number_of_ears);
+        //        // declare int16_t buffers
+        //        std::vector<int16_t> input_buffer_int16(buffer.getNumSamples() * buffer.getNumChannels());
+        //        std::vector<int16_t> output_buffer_int16(buffer.getNumSamples() * number_of_ears);
+        //
+        //        // convert float to int16_t
+        //        for (int channel = 0; channel < numChannels; ++channel)
+        //        {
+        //            const float* source = buffer.getReadPointer(channel);
+        //
+        //            // Assuming each int16_t sample occupies 2 bytes
+        //            juce::AudioDataConverters::convertFloatToInt16LE(source, input_buffer_int16.data() + channel * numSamples, numSamples, 2);
+        //        }
 
-        // convert float to int16_t
+        // declare float buffers
+        std::vector<float> input_buffer (buffer.getNumSamples() * buffer.getNumChannels());
+        std::vector<float> output_buffer (buffer.getNumSamples() * number_of_ears);
+
+        // copy data from buffer to input_buffer
         for (int channel = 0; channel < numChannels; ++channel)
         {
-            const float* source = buffer.getReadPointer(channel);
-
-            // Assuming each int16_t sample occupies 2 bytes
-            juce::AudioDataConverters::convertFloatToInt16LE(source, input_buffer_int16.data() + channel * numSamples, numSamples, 2);
+            const float* source = buffer.getReadPointer (channel);
+            std::copy (source, source + numSamples, input_buffer.begin() + channel * numSamples);
         }
 
         // process
-        libiamfbr_->process_planar(input_buffer_int16, output_buffer_int16);
+        libiamfbr_->process_planar_audio_data (input_buffer, output_buffer);
 
-//        // copy input to the output
-//        for (size_t i = 0; i < output_buffer_int16.size(); i++)
-//        {
-//            output_buffer_int16[i] = input_buffer_int16[i];
-//        }
+        //        // copy input to the output
+        //        for (size_t i = 0; i < output_buffer_int16.size(); i++)
+        //        {
+        //            output_buffer_int16[i] = input_buffer_int16[i];
+        //        }
 
-        // convert int16_t to float
+        //        // convert int16_t to float
+        //        for (int channel = 0; channel < number_of_ears; ++channel)
+        //        {
+        //            float* dest = buffer.getWritePointer(channel);
+        //
+        //            // Assuming each int16_t sample occupies 2 bytes
+        //            juce::AudioDataConverters::convertInt16LEToFloat(output_buffer_int16.data() + channel * numSamples, dest, numSamples, 2);
+        //        }
+
+        // copy data from output_buffer to buffer
         for (int channel = 0; channel < number_of_ears; ++channel)
         {
-            float* dest = buffer.getWritePointer(channel);
-
-            // Assuming each int16_t sample occupies 2 bytes
-            juce::AudioDataConverters::convertInt16LEToFloat(output_buffer_int16.data() + channel * numSamples, dest, numSamples, 2);
+            float* dest = buffer.getWritePointer (channel);
+            std::copy (output_buffer.begin() + channel * numSamples, output_buffer.begin() + (channel + 1) * numSamples, dest);
         }
 
         // clear remaining channels
@@ -82,7 +100,7 @@ public:
     }
 
 private:
-    std::unique_ptr<iamfbr::libiamfbr> libiamfbr_;
+    std::unique_ptr<iamfbr::iamfbr_impl> libiamfbr_;
 
     int fs;
     size_t bs;

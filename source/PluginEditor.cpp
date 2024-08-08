@@ -5,6 +5,27 @@ PluginEditor::PluginEditor (PluginProcessor& p)
 {
     juce::ignoreUnused (processorRef);
 
+    addAndMakeVisible (inputTypeSelectComboBox);
+    inputTypeSelectComboBox.setText("Select Input Type");
+    inputTypeSelectComboBox.addItem ("Ambisonics", 1);
+    inputTypeSelectComboBox.addItem ("Channel-based", 2);
+    inputTypeSelectComboBox.addItem ("Single-sources", 2);
+    inputTypeSelectComboBox.onChange = [this]() {
+        DBG ("Selected Input: " + juce::String (inputTypeSelectComboBox.getSelectedId()) + inputTypeSelectComboBox.getText());
+    };
+
+    addAndMakeVisible(outputTypeSelectComboBox);
+    outputTypeSelectComboBox.setText("Select Output Type");
+    outputTypeSelectComboBox.addItem ("Binaural", 1);
+    outputTypeSelectComboBox.addItem ("Ambisonics", 2);
+    outputTypeSelectComboBox.onChange = [this]() {
+        DBG ("Selected Output: " + juce::String (outputTypeSelectComboBox.getSelectedId()) + outputTypeSelectComboBox.getText());
+    };
+
+    // set the default configuration
+    inputTypeSelectComboBox.setSelectedId(1, juce::sendNotification);
+    outputTypeSelectComboBox.setSelectedId(1, juce::sendNotification);
+
     addAndMakeVisible (inspectButton);
 
     // this chunk of code instantiates and opens the melatonin inspector
@@ -18,33 +39,8 @@ PluginEditor::PluginEditor (PluginProcessor& p)
         inspector->setVisible (true);
     };
 
-    // add the input type selection box to the editor
-    addAndMakeVisible(inputTypeSelectComboBox);
-//    inputTypeSelectComboBox.addItem("Mono", 1);
-//    inputTypeSelectComboBox.addItem("Stereo", 2);
-//    inputTypeSelectComboBox.addItem("5.1", 3);
-//    inputTypeSelectComboBox.addItem("7.1.4", 4);
-    inputTypeSelectComboBox.addItem("3OA", 1);
-    inputTypeSelectComboBox.addItem("7OA", 2);
-    inputTypeSelectComboBox.onChange = [this]() {
-        DBG("selected " + juce::String(inputTypeSelectComboBox.getSelectedId()));
-//        if(inputTypeSelectComboBox.getSelectedId() == 1)
-//        {
-//            // 3OA
-//            processorRef.libiamfbr_->setInputType(0);
-//        }
-//        else if(inputTypeSelectComboBox.getSelectedId() == 2)
-//        {
-//            // 7OA
-//            processorRef.libiamfbr_->setInputType(1);
-//        }
-    };
 
-//    inputTypeSelectComboBox.setSelectedId(1, juce::sendNotification);
-
-    // Make sure that before the constructor has finished, you've set the
-    // editor's size to whatever you need it to be.
-    setSize (400, 300);
+    setSize (800, 600);
 }
 
 void PluginEditor::paint (juce::Graphics& g)
@@ -53,18 +49,25 @@ void PluginEditor::paint (juce::Graphics& g)
     g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
 
     auto area = getLocalBounds();
+
     g.setColour (juce::Colours::white);
+
+    // Draw vertical, dashed line in the middle of GUI.
+    g.setColour (juce::Colours::black);
+    g.drawVerticalLine (getWidth() / 2, 0, getHeight());
+
     g.setFont (16.0f);
-    auto helloWorld = juce::String ("Hello from ") + PRODUCT_NAME_WITHOUT_VERSION + " v" VERSION + " running in " + CMAKE_BUILD_TYPE;
-    g.drawText (helloWorld, area.removeFromTop (150), juce::Justification::centred, false);
+    //    auto helloWorld = juce::String ("Hello from ") + PRODUCT_NAME_WITHOUT_VERSION + " v" VERSION + " running in " + CMAKE_BUILD_TYPE;
+    //    g.drawText (helloWorld, area.removeFromTop (150), juce::Justification::centred, false);
 }
 
 void PluginEditor::resized()
 {
     auto area = getLocalBounds();
-    area.reduce(10,10);
+    area.reduce (10, 10);
 
-    inputTypeSelectComboBox.setBounds(area.removeFromLeft(200).removeFromTop(25));
+    inputTypeSelectComboBox.setBounds (area.removeFromLeft (200).removeFromTop (25));
+    outputTypeSelectComboBox.setBounds (area.removeFromRight (200).removeFromTop (25));
 
-    inspectButton.setBounds(area.removeFromRight(200).removeFromBottom(25));
+//    inspectButton.setBounds (area.removeFromBottom (25));
 }
