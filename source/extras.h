@@ -16,10 +16,10 @@ struct source_properties {
 };
 
 struct plugin_state {
+  bool needs_update_DSP, needs_update_encoding_matrix, needs_update_UI;
   InputType input_type;
   int ambisonic_order;
   int selected_preset_id;
-
   std::vector<source_properties> sources;
 };
 

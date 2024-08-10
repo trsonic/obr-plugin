@@ -9,7 +9,7 @@
 #include "ipps.h"
 #endif
 
-class PluginProcessor : public juce::AudioProcessor {
+class PluginProcessor : public juce::AudioProcessor, public juce::Timer {
  public:
   PluginProcessor();
   ~PluginProcessor() override = default;
@@ -39,10 +39,15 @@ class PluginProcessor : public juce::AudioProcessor {
   void setStateInformation(const void* data, int sizeInBytes) override;
 
   plugin_state plugin_state_;
+
   void update_DSP();
+
+  void timerCallback() override;
 
  private:
   iamfbrWrapper iamfbr_dsp_;
+
+  int timer_callbacks_to_wait = 10;
 
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginProcessor)

@@ -6,7 +6,7 @@
 #include "melatonin_inspector/melatonin_inspector.h"
 
 //==============================================================================
-class PluginEditor : public juce::AudioProcessorEditor {
+class PluginEditor : public juce::AudioProcessorEditor, public juce::Timer {
  public:
   explicit PluginEditor(PluginProcessor&);
   ~PluginEditor() override = default;
@@ -15,6 +15,8 @@ class PluginEditor : public juce::AudioProcessorEditor {
   void paint(juce::Graphics&) override;
   void resized() override;
 
+  void timerCallback() override;
+
  private:
   // This reference is provided as a quick way for your editor to
   // access the processor object that created it.
@@ -22,8 +24,8 @@ class PluginEditor : public juce::AudioProcessorEditor {
 
   juce::Label input_cb_label, input_ambisonic_order_label,
       input_preset_select_label;
-  juce::ComboBox input_type_selector,
-      input_ambisonic_order_selector, input_preset_selector;
+  juce::ComboBox input_type_selector, input_ambisonic_order_selector,
+      input_preset_selector;
 
   // source list header labels
   juce::OwnedArray<juce::Label> source_list_labels;

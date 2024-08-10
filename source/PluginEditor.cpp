@@ -23,7 +23,8 @@ PluginEditor::PluginEditor(PluginProcessor& p)
       default:
         break;
     }
-    setup_UI();
+    processorRef.plugin_state_.needs_update_DSP = true;
+processorRef.plugin_state_.needs_update_UI = true;
   };
 
   addAndMakeVisible(input_cb_label);
@@ -44,7 +45,8 @@ PluginEditor::PluginEditor(PluginProcessor& p)
       default:
         break;
     }
-    setup_UI();
+    processorRef.plugin_state_.needs_update_DSP = true;
+    processorRef.plugin_state_.needs_update_UI = true;
   };
 
   addChildComponent(input_ambisonic_order_label);
@@ -58,8 +60,10 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   input_preset_selector.addItem("5.1", 2);
   input_preset_selector.onChange = [this]() {
     // load input configuration preset
-    processorRef.plugin_state_.selected_preset_id = input_preset_selector.getSelectedId();
-    setup_UI();
+    processorRef.plugin_state_.selected_preset_id =
+        input_preset_selector.getSelectedId();
+    processorRef.plugin_state_.needs_update_DSP = true;
+processorRef.plugin_state_.needs_update_UI = true;
   };
 
   addChildComponent(input_preset_select_label);
@@ -85,20 +89,9 @@ PluginEditor::PluginEditor(PluginProcessor& p)
     addChildComponent(label);
   }
 
+  setSize(400, 600);
 
-  setSize(800, 600);
-
-  // SETUP INITIAL SETTINGS
-  processorRef.plugin_state_.input_type = InputType::Individual_sources;
-  processorRef.plugin_state_.ambisonic_order = 7;
-  processorRef.plugin_state_.selected_preset_id = 1;
-
-  // setup individual sources
-  processorRef.plugin_state_.sources.push_back({"source1", 1.0f, -30.0f, 0.0f, 1.0f});
-  processorRef.plugin_state_.sources.push_back({"source2", 1.0f, 30.0f, 0.0f, 1.0f});
-  processorRef.plugin_state_.sources.push_back({"source3", 1.0f, 0.0f, 0.0f, 1.0f});
-  processorRef.plugin_state_.sources.push_back({"source4", 1.0f, 0.0f, 90.0f, 1.0f});
-  setup_UI();
+  startTimer(100);
 }
 
 void PluginEditor::paint(juce::Graphics& g) {
@@ -107,24 +100,11 @@ void PluginEditor::paint(juce::Graphics& g) {
   g.fillAll(
       getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
 
-  auto area = getLocalBounds();
-
-  g.setColour(juce::Colours::white);
-
-  // Draw vertical, dashed line in the middle of GUI.
-  g.setColour(juce::Colours::black);
-  g.drawVerticalLine(getWidth() / 2, 0, getHeight());
-
-  g.setFont(16.0f);
-  //    auto helloWorld = juce::String ("Hello from ") +
-  //    PRODUCT_NAME_WITHOUT_VERSION + " v" VERSION + " running in " +
-  //    CMAKE_BUILD_TYPE; g.drawText (helloWorld, area.removeFromTop (150),
-  //    juce::Justification::centred, false);
+//  g.setFont(16.0f);
 }
 
 void PluginEditor::resized() {
   auto area = getLocalBounds();
-  //  area.reduce(10, 10);
 
   int margin = 10;
   int cb_width = 200;
@@ -132,30 +112,23 @@ void PluginEditor::resized() {
 
   input_type_selector.setSize(cb_width, cb_height);
   input_type_selector.setCentrePosition(
-      area.getWidth() / 2 - (cb_width / 2 + margin), cb_height / 2 + margin);
+      area.getWidth() - (cb_width / 2 + margin), cb_height / 2 + margin);
 
   input_ambisonic_order_selector.setSize(cb_width, cb_height);
   input_ambisonic_order_selector.setCentrePosition(
-      area.getWidth() / 2 - (cb_width / 2 + margin), 60);
+      area.getWidth() - (cb_width / 2 + margin), 60);
 
   input_preset_selector.setSize(cb_width, cb_height);
   input_preset_selector.setCentrePosition(
-      area.getWidth() / 2 - (cb_width / 2 + margin), 60);
-
+      area.getWidth() - (cb_width / 2 + margin), 60);
 
   // individual source stuff
   for (int i = 0; i < source_list_labels.size(); i++) {
     source_list_labels[i]->setBounds(margin + 75 * i, 50, 100, 25);
   }
-
-  int value_width = 100;
-  int value_height = 25;
 }
 
 void PluginEditor::setup_UI() {
-  // trigger DSP update
-  processorRef.update_DSP();
-
   // clear UI
   input_ambisonic_order_selector.setVisible(false);
   input_ambisonic_order_label.setVisible(false);
@@ -266,4 +239,14 @@ void PluginEditor::setup_UI() {
     default:
       break;
   }
+}
+
+void PluginEditor::timerCallback() {
+  // This gets called by our timer and will update the UI
+  // based on the current state of the processor.
+  if (processorRef.plugin_state_.needs_update_UI) {
+    setup_UI();
+    processorRef.plugin_state_.needs_update_UI = false;
+  }
+
 }
