@@ -10,3 +10,6 @@
 	path = cmake
 	url = https://github.com/sudara/cmake-includes.git
 	branch = main
+[submodule "iamfbr"]
+	path = iamfbr
+	url = https://github.com/trsonic/iamfbr
