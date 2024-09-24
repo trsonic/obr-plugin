@@ -79,6 +79,13 @@ PluginEditor::PluginEditor(PluginProcessor& p)
     processorRef.iamfbr_->remove_audio_element();
   };
 
+  // Add log window.
+  logWindow.setMultiLine(true);
+  logWindow.setReadOnly(true);
+  logWindow.setCaretVisible(false);
+  logWindow.setScrollbarsShown(true);
+  addAndMakeVisible(logWindow);
+
   // Add labels to the editor.
   addAndMakeVisible(iamfbr_number_of_audio_elements_label);
   addAndMakeVisible(iamfbr_sampling_rate_label);
@@ -111,16 +118,14 @@ void PluginEditor::resized() {
 
   add_audio_element_button.setBounds(margin, 50 + margin, button_width, 50);
 
-  remove_audio_element_button.setBounds(margin + button_width + margin, 50 + margin, button_width,
-                                        50);
+  remove_audio_element_button.setBounds(margin + button_width + margin,
+                                        50 + margin, button_width, 50);
 
   iamfbr_number_of_audio_elements_label.setBounds(margin, 50 + 2 * margin + 50,
                                                   label_width, label_height);
 
-  // iamfbr state labels
-  //  for (int i = 0; i < source_list_labels.size(); i++) {
-  //    source_list_labels[i]->setBounds(margin + 75 * i, 50, 100, 25);
-  //  }
+  logWindow.setBounds(margin, 50 + 3 * margin + 50 + label_height,
+                      getWidth() - 2 * margin, 300);
 
   iamfbr_buffer_size_label.setBounds(margin,
                                      getHeight() - margin - 4 * label_height,
@@ -138,6 +143,9 @@ void PluginEditor::resized() {
 void PluginEditor::timerCallback() {
   // This gets called by our timer and will update the UI
   // based on the current state of the processor / iamfbr.
+  juce::String message = juce::String(processorRef.iamfbr_->get_audio_element_list_log_message());
+  logWindow.setText(message);
+  logWindow.moveCaretToEnd();
 
   // Display info about iamfbr AudioElementConfig list.
   iamfbr_number_of_audio_elements_label.setText(

@@ -22,6 +22,8 @@ class PluginEditor : public juce::AudioProcessorEditor, public juce::Timer {
 
   juce::TextButton add_audio_element_button, remove_audio_element_button;
 
+  juce::TextEditor logWindow;
+
   juce::Label iamfbr_number_of_audio_elements_label;
   juce::Label iamfbr_sampling_rate_label, iamfbr_buffer_size_label;
   juce::Label iamfbr_number_of_input_channels_label,
