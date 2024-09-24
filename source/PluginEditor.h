@@ -2,8 +2,6 @@
 
 #include "BinaryData.h"
 #include "PluginProcessor.h"
-#include "extras.h"
-#include "melatonin_inspector/melatonin_inspector.h"
 
 //==============================================================================
 class PluginEditor : public juce::AudioProcessorEditor, public juce::Timer {
@@ -22,21 +20,12 @@ class PluginEditor : public juce::AudioProcessorEditor, public juce::Timer {
   // access the processor object that created it.
   PluginProcessor& processorRef;
 
-  juce::Label input_cb_label, input_ambisonic_order_label,
-      input_preset_select_label;
-  juce::ComboBox input_type_selector, input_ambisonic_order_selector,
-      input_preset_selector;
+  juce::TextButton add_audio_element_button, remove_audio_element_button;
 
-  // source list header labels
-  juce::OwnedArray<juce::Label> source_list_labels;
-
-  // source property value matrix
-  juce::OwnedArray<juce::OwnedArray<juce::Label>> label_matrix_;
-
-  std::unique_ptr<melatonin::Inspector> inspector;
-  juce::TextButton inspectButton{"Inspect the UI"};
-
-  void setup_UI();
+  juce::Label iamfbr_number_of_audio_elements_label;
+  juce::Label iamfbr_sampling_rate_label, iamfbr_buffer_size_label;
+  juce::Label iamfbr_number_of_input_channels_label,
+      iamfbr_number_of_output_channels_label;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginEditor)
 };

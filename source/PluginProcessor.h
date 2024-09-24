@@ -2,8 +2,7 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
-#include "extras.h"
-#include "iamfbr_wrapper.h"
+#include "../iamfbr/src/iamfbr_impl.h"
 
 #if (MSVC)
 #include "ipps.h"
@@ -38,16 +37,11 @@ class PluginProcessor : public juce::AudioProcessor, public juce::Timer {
   void getStateInformation(juce::MemoryBlock& destData) override;
   void setStateInformation(const void* data, int sizeInBytes) override;
 
-  plugin_state plugin_state_;
-
-  void update_DSP();
-
   void timerCallback() override;
 
- private:
-  iamfbrWrapper iamfbr_dsp_;
+  std::unique_ptr<iamfbr::IamfbrImpl> iamfbr_;
 
-  int timer_callbacks_to_wait = 10;
+ private:
 
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginProcessor)

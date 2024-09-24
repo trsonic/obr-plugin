@@ -63,10 +63,10 @@ void PluginProcessor::changeProgramName(int index,
 
 //==============================================================================
 void PluginProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {
-  update_DSP();
+  iamfbr_ = std::make_unique<iamfbr::IamfbrImpl>(samplesPerBlock, sampleRate);
 }
 
-void PluginProcessor::releaseResources() { iamfbr_dsp_.deinitialize(); }
+void PluginProcessor::releaseResources() { iamfbr_.reset(); }
 
 void PluginProcessor::processBlock(juce::AudioBuffer<float>& buffer,
                                    juce::MidiBuffer& midiMessages) {
@@ -74,10 +74,33 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 
   juce::ScopedNoDenormals noDenormals;  // Verify if this is necessary
 
-  if (plugin_state_.needs_update_DSP) return;
-  if (plugin_state_.needs_update_encoding_matrix) return;
+  if (!iamfbr_) return;
 
-  iamfbr_dsp_.process(buffer);
+  // get the number of channels
+  int numSamples = buffer.getNumSamples();
+  int numChannels = buffer.getNumChannels();
+
+  // declare float buffers
+  std::vector<float> input_buffer(static_cast<size_t>(numSamples * numChannels),
+                                  0.0f);
+  std::vector<float> output_buffer(
+      static_cast<size_t>(numSamples * numChannels), 0.0f);
+
+  // copy data from buffer to input_buffer
+  for (int channel = 0; channel < numChannels; ++channel) {
+    const float* source = buffer.getReadPointer(channel);
+    std::copy(source, source + numSamples,
+              input_buffer.begin() + channel * numSamples);
+  }
+
+  iamfbr_->process_planar_audio_data(input_buffer, output_buffer);
+
+  // copy data from output_buffer to buffer
+  for (int channel = 0; channel < numChannels; ++channel) {
+    float* dest = buffer.getWritePointer(channel);
+    std::copy(output_buffer.begin() + channel * numSamples,
+              output_buffer.begin() + (channel + 1) * numSamples, dest);
+  }
 }
 
 //==============================================================================
@@ -110,46 +133,4 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
   return new PluginProcessor();
 }
 
-void PluginProcessor::update_DSP() {
-  auto buffer_size = static_cast<size_t>(getBlockSize());
-  int sampling_rate = static_cast<int>(getSampleRate());
-
-  if (plugin_state_.needs_update_DSP) {
-    iamfbr_dsp_.update_DSP_config(buffer_size, sampling_rate, plugin_state_);
-    plugin_state_.needs_update_DSP = false;
-  }
-
-  if (plugin_state_.needs_update_encoding_matrix) {
-    for (size_t i = 0; i < plugin_state_.sources.size(); i++) {
-      iamfbr_dsp_.update_source(
-          static_cast<int>(i), plugin_state_.sources[i].gain,
-          plugin_state_.sources[i].azimuth, plugin_state_.sources[i].elevation,
-          plugin_state_.sources[i].distance);
-    }
-    plugin_state_.needs_update_encoding_matrix = false;
-  }
-}
-
-void PluginProcessor::timerCallback() {
-  if (timer_callbacks_to_wait > 0) {
-    timer_callbacks_to_wait--;
-    return;
-  } else if (timer_callbacks_to_wait == 0) {
-    // SETUP INITIAL SETTINGS
-    plugin_state_.input_type = InputType::Individual_sources;
-    plugin_state_.ambisonic_order = 7;
-    plugin_state_.selected_preset_id = 1;
-    plugin_state_.needs_update_DSP = true;
-
-    // setup individual sources
-    plugin_state_.sources.push_back({"source1", 1.0f, 30.0f, 0.0f, 1.0f});
-    plugin_state_.sources.push_back({"source2", 1.0f, -30.0f, 0.0f, 1.0f});
-    plugin_state_.sources.push_back({"source3", 1.0f, 0.0f, 0.0f, 1.0f});
-    plugin_state_.sources.push_back({"source4", 1.0f, 0.0f, 0.0f, 1.0f});
-    plugin_state_.needs_update_encoding_matrix = true;
-    plugin_state_.needs_update_UI = true;
-    timer_callbacks_to_wait = -1;
-  }
-
-  update_DSP();
-}
+void PluginProcessor::timerCallback() {}
