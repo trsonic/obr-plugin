@@ -5,12 +5,19 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   juce::ignoreUnused(processorRef);
 
   // Modify look and feel.
+  getLookAndFeel().setDefaultSansSerifTypefaceName("Courier New");
   getLookAndFeel().setColour(juce::ResizableWindow::backgroundColourId,
                              juce::Colours::black);
   getLookAndFeel().setColour(juce::Label::textColourId, juce::Colours::white);
   getLookAndFeel().setColour(juce::TextButton::buttonColourId,
-                             juce::Colours::blueviolet);
+                             juce::Colours::black);
   getLookAndFeel().setColour(juce::PopupMenu::backgroundColourId,
+                             juce::Colours::blueviolet.darker());
+  getLookAndFeel().setColour(juce::TextEditor::backgroundColourId,
+                             juce::Colours::black);
+  getLookAndFeel().setColour(juce::TextEditor::outlineColourId,
+                             juce::Colours::transparentBlack);
+  getLookAndFeel().setColour(juce::ScrollBar::thumbColourId,
                              juce::Colours::blueviolet.darker());
 
   // Set up 'Add Audio Element' button.
@@ -80,10 +87,12 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   };
 
   // Add log window.
-  logWindow.setMultiLine(true);
+  logWindow.setMultiLine(true, false);
   logWindow.setReadOnly(true);
   logWindow.setCaretVisible(false);
+  //  logWindow.setInterceptsMouseClicks(false, false);
   logWindow.setScrollbarsShown(true);
+  logWindow.setFont(juce::Font(14.0f));
   addAndMakeVisible(logWindow);
 
   // Add labels to the editor.
@@ -94,7 +103,7 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   addAndMakeVisible(iamfbr_number_of_output_channels_label);
 
   // Set size of the plugin window.
-  setSize(400, 600);
+  setSize(850, 1000);
 
   // Start UI refresh timer.
   startTimer(100);
@@ -106,44 +115,43 @@ void PluginEditor::paint(juce::Graphics& g) {
 
   g.setFont(24.0f);
   g.setColour(getLookAndFeel().findColour(juce::Label::textColourId));
-  g.drawText("IAMF Binaural Renderer", 0, 0, getWidth(), 50,
+  g.drawText("IAMF Binaural Renderer", 0, 0, getWidth() / 2, 50,
              juce::Justification::centred);
 }
 
 void PluginEditor::resized() {
   int margin = 10;
-  int label_width = 250;
+  int button_width = (getWidth() - 5 * margin) / 4;
+  int button_height = 50;
+  add_audio_element_button.setBounds(margin, 50 + margin, button_width,
+                                     button_height);
+  remove_audio_element_button.setBounds(
+      margin + button_width + margin, 50 + margin, button_width, button_height);
+
+  int label_width = 400;
   int label_height = 20;
-  int button_width = (getWidth() - 3 * margin) / 2;
-
-  add_audio_element_button.setBounds(margin, 50 + margin, button_width, 50);
-
-  remove_audio_element_button.setBounds(margin + button_width + margin,
-                                        50 + margin, button_width, 50);
-
-  iamfbr_number_of_audio_elements_label.setBounds(margin, 50 + 2 * margin + 50,
-                                                  label_width, label_height);
-
-  logWindow.setBounds(margin, 50 + 3 * margin + 50 + label_height,
-                      getWidth() - 2 * margin, 300);
-
-  iamfbr_buffer_size_label.setBounds(margin,
-                                     getHeight() - margin - 4 * label_height,
-                                     label_width, label_height);
-  iamfbr_sampling_rate_label.setBounds(margin,
-                                       getHeight() - margin - 3 * label_height,
+  int label_x = getWidth() / 2 + margin;
+  iamfbr_buffer_size_label.setBounds(label_x, margin, label_width,
+                                     label_height);
+  iamfbr_sampling_rate_label.setBounds(label_x, margin + label_height * 1,
                                        label_width, label_height);
   iamfbr_number_of_input_channels_label.setBounds(
-      margin, getHeight() - margin - 2 * label_height, label_width,
-      label_height);
+      label_x, margin + label_height * 2, label_width, label_height);
   iamfbr_number_of_output_channels_label.setBounds(
-      margin, getHeight() - margin - label_height, label_width, label_height);
+      label_x, margin + label_height * 3, label_width, label_height);
+  iamfbr_number_of_audio_elements_label.setBounds(
+      label_x, margin + label_height * 4, label_width, label_height);
+
+  logWindow.setBounds(margin, margin * 2 + label_height * 5,
+                      getWidth() - 2 * margin,
+                      getHeight() - 3 * margin - label_height * 5);
 }
 
 void PluginEditor::timerCallback() {
   // This gets called by our timer and will update the UI
   // based on the current state of the processor / iamfbr.
-  juce::String message = juce::String(processorRef.iamfbr_->get_audio_element_list_log_message());
+  juce::String message =
+      juce::String(processorRef.iamfbr_->get_audio_element_list_log_message());
   logWindow.setText(message);
   logWindow.moveCaretToEnd();
 
