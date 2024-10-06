@@ -43,6 +43,8 @@ class PluginProcessor : public juce::AudioProcessor, public juce::Timer {
 
  private:
 
+  const int timer_rate = 10;  // ms
+
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginProcessor)
 };

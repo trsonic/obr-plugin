@@ -103,10 +103,10 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   addAndMakeVisible(iamfbr_number_of_output_channels_label);
 
   // Set size of the plugin window.
-  setSize(850, 1000);
+  setSize(880, 1000);
 
   // Start UI refresh timer.
-  startTimer(100);
+  startTimer(20);
 }
 
 void PluginEditor::paint(juce::Graphics& g) {
@@ -151,7 +151,7 @@ void PluginEditor::timerCallback() {
   // This gets called by our timer and will update the UI
   // based on the current state of the processor / iamfbr.
   juce::String message =
-      juce::String(processorRef.iamfbr_->get_audio_element_list_log_message());
+      juce::String(processorRef.iamfbr_->get_audio_element_config_log_message());
   logWindow.setText(message);
   logWindow.moveCaretToEnd();
 

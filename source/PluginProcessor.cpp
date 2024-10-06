@@ -8,7 +8,7 @@ PluginProcessor::PluginProcessor()
               // discreteChannels doesn't work well with VST3
               .withInput("Input", juce::AudioChannelSet::ambisonic(7), true)
               .withOutput("Output", juce::AudioChannelSet::stereo(), true)) {
-  startTimer(100);
+  startTimer(timer_rate);
 }
 
 const juce::String PluginProcessor::getName() const { return JucePlugin_Name; }
@@ -64,9 +64,13 @@ void PluginProcessor::changeProgramName(int index,
 //==============================================================================
 void PluginProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {
   iamfbr_ = std::make_unique<iamfbr::IamfbrImpl>(samplesPerBlock, sampleRate);
+  startTimer(timer_rate);
 }
 
-void PluginProcessor::releaseResources() { iamfbr_.reset(); }
+void PluginProcessor::releaseResources() {
+  stopTimer();
+  iamfbr_.reset();
+}
 
 void PluginProcessor::processBlock(juce::AudioBuffer<float>& buffer,
                                    juce::MidiBuffer& midiMessages) {
@@ -76,30 +80,30 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 
   if (!iamfbr_) return;
 
-  // get the number of channels
-  int numSamples = buffer.getNumSamples();
-  int numChannels = buffer.getNumChannels();
+  // Get the number of channels and samples per channel.
+  auto numChannels = static_cast<size_t>(buffer.getNumChannels());
+  auto numSamples = static_cast<size_t>(buffer.getNumSamples());
 
-  // declare float buffers
-  std::vector<float> input_buffer(static_cast<size_t>(numSamples * numChannels),
-                                  0.0f);
-  std::vector<float> output_buffer(
-      static_cast<size_t>(numSamples * numChannels), 0.0f);
+  // Declare input and output buffers.
+  std::vector<std::vector<float>> input_buffer(
+      numChannels, std::vector<float>(numSamples, 0.0f));
+  std::vector<std::vector<float>> output_buffer(
+      numChannels, std::vector<float>(numSamples, 0.0f));
 
-  // copy data from buffer to input_buffer
-  for (int channel = 0; channel < numChannels; ++channel) {
-    const float* source = buffer.getReadPointer(channel);
-    std::copy(source, source + numSamples,
-              input_buffer.begin() + channel * numSamples);
+  // Copy data from juce::AudioBuffer to input_buffer.
+  for (size_t channel = 0; channel < numChannels; ++channel) {
+    const float* source = buffer.getReadPointer(static_cast<int>(channel));
+    std::copy(source, source + numSamples, input_buffer[channel].begin());
   }
 
-  iamfbr_->process_planar_audio_data(input_buffer, output_buffer);
+//  output_buffer = input_buffer;
+    iamfbr_->process(input_buffer, output_buffer);
 
-  // copy data from output_buffer to buffer
-  for (int channel = 0; channel < numChannels; ++channel) {
-    float* dest = buffer.getWritePointer(channel);
-    std::copy(output_buffer.begin() + channel * numSamples,
-              output_buffer.begin() + (channel + 1) * numSamples, dest);
+  // Copy data from output_buffer to juce::AudioBuffer.
+  for (size_t channel = 0; channel < numChannels; ++channel) {
+    float* dest = buffer.getWritePointer(static_cast<int>(channel));
+    std::copy(output_buffer[channel].begin(), output_buffer[channel].end(),
+              dest);
   }
 }
 
@@ -133,4 +137,19 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
   return new PluginProcessor();
 }
 
-void PluginProcessor::timerCallback() {}
+void PluginProcessor::timerCallback() {
+  if (!iamfbr_) return;
+
+  // Update azimuth with a rate of 30 degrees per second.
+  static float azimuth = 0.0f;
+  azimuth += 30.0f * (float)timer_rate / 1000.0f;
+
+  if (azimuth >= 180.0f) {
+    azimuth -= 360.0f;
+  }
+
+  for (auto index : iamfbr_->get_ids_of_audio_elements_containing_objects()) {
+    int sign = index % 2 == 0 ? 1 : -1;
+    iamfbr_->update_object_position(index, (float)sign * azimuth, 0.0f, 1.0f);
+  }
+}
