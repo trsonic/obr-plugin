@@ -96,8 +96,8 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     std::copy(source, source + numSamples, input_buffer[channel].begin());
   }
 
-//  output_buffer = input_buffer;
-    iamfbr_->process(input_buffer, output_buffer);
+  // output_buffer = input_buffer;
+  iamfbr_->process(input_buffer, output_buffer);
 
   // Copy data from output_buffer to juce::AudioBuffer.
   for (size_t channel = 0; channel < numChannels; ++channel) {

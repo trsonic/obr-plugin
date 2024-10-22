@@ -83,7 +83,7 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   addAndMakeVisible(remove_audio_element_button);
   remove_audio_element_button.setButtonText("Remove Audio Element");
   remove_audio_element_button.onClick = [this] {
-    processorRef.iamfbr_->remove_audio_element();
+    processorRef.iamfbr_->remove_last_audio_element();
   };
 
   // Add log window.
@@ -150,8 +150,8 @@ void PluginEditor::resized() {
 void PluginEditor::timerCallback() {
   // This gets called by our timer and will update the UI
   // based on the current state of the processor / iamfbr.
-  juce::String message =
-      juce::String(processorRef.iamfbr_->get_audio_element_config_log_message());
+  juce::String message = juce::String(
+      processorRef.iamfbr_->get_audio_element_config_log_message());
   logWindow.setText(message);
   logWindow.moveCaretToEnd();
 
@@ -183,6 +183,4 @@ void PluginEditor::timerCallback() {
       "Number of output channels: " +
           juce::String(processorRef.iamfbr_->get_number_of_output_channels()),
       juce::dontSendNotification);
-
-  ;
 }

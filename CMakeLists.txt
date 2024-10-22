@@ -90,8 +90,19 @@ add_library(SharedCode INTERFACE)
 # Use cxx_std_23 for C++23 (as of CMake v 3.20)
 target_compile_features(SharedCode INTERFACE cxx_std_20)
 
+include(FetchContent)
+
+# fetch Abseil library
+include(FetchContent)
+FetchContent_Declare(
+        absl
+        GIT_REPOSITORY https://github.com/abseil/abseil-cpp.git
+        GIT_TAG 7e149e40c7a2d8049ecd28d1f83f64cc197cc128
+)
+FetchContent_MakeAvailable(absl)
+
 # Add iamfbr library.
-add_subdirectory(iamfbr)
+add_subdirectory("../iamfbr" "iamfbr")
 
 # Manually list all .h and .cpp files for the plugin
 # If you are like me, you'll use globs for your sanity.
@@ -149,6 +160,7 @@ target_link_libraries(SharedCode
 target_link_libraries("${PROJECT_NAME}" PRIVATE
         SharedCode
         iamfbr
+        absl::status
 )
 
 # IPP support, comment out to disable
