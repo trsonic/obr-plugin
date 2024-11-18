@@ -20,7 +20,7 @@ class PluginEditor : public juce::AudioProcessorEditor, public juce::Timer {
   // access the processor object that created it.
   PluginProcessor& processorRef;
 
-  juce::TextButton add_audio_element_button, remove_audio_element_button;
+  juce::TextButton select_audio_element_button;
 
   juce::TextEditor logWindow;
 

@@ -103,6 +103,7 @@ FetchContent_MakeAvailable(absl)
 
 # Add iamfbr library.
 add_subdirectory("../iamfbr" "iamfbr")
+include_directories("../iamfbr")
 
 # Manually list all .h and .cpp files for the plugin
 # If you are like me, you'll use globs for your sanity.

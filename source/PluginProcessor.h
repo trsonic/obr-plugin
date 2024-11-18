@@ -2,13 +2,14 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
-#include "../iamfbr/src/iamfbr_impl.h"
+#include "src/renderer/iamfbr_impl.h"
 
 #if (MSVC)
 #include "ipps.h"
 #endif
 
-class PluginProcessor : public juce::AudioProcessor, public juce::Timer {
+class PluginProcessor : public juce::AudioProcessor
+    , public juce::AudioProcessorValueTreeState::Listener {
  public:
   PluginProcessor();
   ~PluginProcessor() override = default;
@@ -37,14 +38,19 @@ class PluginProcessor : public juce::AudioProcessor, public juce::Timer {
   void getStateInformation(juce::MemoryBlock& destData) override;
   void setStateInformation(const void* data, int sizeInBytes) override;
 
-  void timerCallback() override;
-
   std::unique_ptr<iamfbr::IamfbrImpl> iamfbr_;
 
+  void setAudioElementType(std::string audio_element_type);
+  void removeLastAudioElement();
+  void removeAllAudioElements();
+
+  void parameterChanged(const juce::String& parameterID, float newValue) override;
+  juce::AudioProcessorValueTreeState parameters;
+
  private:
+  juce::UndoManager undo_manager;
 
-  const int timer_rate = 10;  // ms
-
+  static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginProcessor)
 };
