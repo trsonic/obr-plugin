@@ -77,9 +77,13 @@ void PluginProcessor::releaseResources() { iamfbr_.reset(); }
 void PluginProcessor::processBlock(juce::AudioBuffer<float>& buffer,
                                    juce::MidiBuffer& midiMessages) {
   juce::ignoreUnused(midiMessages);
+  juce::ScopedNoDenormals noDenormals;  // TODO: Verify if this is necessary.
 
-  juce::ScopedNoDenormals noDenormals;  // Verify if this is necessary
+  // Get the number of channels and samples per channel.
+  auto numChannels = static_cast<size_t>(buffer.getNumChannels());
+  auto numSamples = static_cast<size_t>(buffer.getNumSamples());
 
+  // Check if the iamfbr is initialized.
   if (!iamfbr_) {
     // Clear all channels.
     for (int channel = 0; channel < buffer.getNumChannels(); ++channel) {
@@ -88,7 +92,11 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     return;
   }
 
-  if (iamfbr_->GetNumberOfInputChannels() == 0) {
+  // Get number of inputs and outputs of the iamfbr.
+  auto numInputChannels = iamfbr_->GetNumberOfInputChannels();
+  auto numOutputChannels = iamfbr_->GetNumberOfOutputChannels();
+
+  if (numInputChannels == 0) {
     // Clear all channels.
     for (int channel = 0; channel < buffer.getNumChannels(); ++channel) {
       buffer.clear(channel, 0, buffer.getNumSamples());
@@ -96,17 +104,26 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     return;
   }
 
-  // Get the number of channels and samples per channel.
-  auto numChannels = static_cast<size_t>(buffer.getNumChannels());
-  auto numSamples = static_cast<size_t>(buffer.getNumSamples());
+  // Check if the bus width is too small.
+  if (numInputChannels > numChannels || numOutputChannels > numChannels) {
+    bus_width_too_small = true;
+    // Clear all channels.
+    for (int channel = 0; channel < buffer.getNumChannels(); ++channel) {
+      buffer.clear(channel, 0, buffer.getNumSamples());
+    }
+    return;
+  } else {
+    bus_width_too_small = false;
+  }
 
-  // Get number of inputs and outputs of the iamfbr.
-  auto numInputChannels = iamfbr_->GetNumberOfInputChannels();
-  auto numOutputChannels = iamfbr_->GetNumberOfOutputChannels();
-
-  jassert(numInputChannels <= numChannels);
-  jassert(numOutputChannels <= numChannels);
-  jassert(numSamples == iamfbr_->GetBufferSizePerChannel());
+  // Check if the number of samples is correct.
+  if (numSamples != iamfbr_->GetBufferSizePerChannel()) {
+    // Clear all channels.
+    for (int channel = 0; channel < buffer.getNumChannels(); ++channel) {
+      buffer.clear(channel, 0, buffer.getNumSamples());
+    }
+    return;
+  }
 
   // Declare input and output buffers.
   iamfbr::AudioBuffer input_buffer(numInputChannels, numSamples);

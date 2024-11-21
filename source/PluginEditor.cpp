@@ -58,6 +58,13 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   logWindow.setFont(juce::Font(14.0f));
   addAndMakeVisible(logWindow);
 
+  host_bus_width_too_small_label.setText(
+      "Host bus width is too small for the number of required input/output channels.",
+      juce::dontSendNotification);
+  host_bus_width_too_small_label.setColour(juce::Label::textColourId,
+                                           juce::Colours::red);
+  addChildComponent(host_bus_width_too_small_label);
+
   // Add labels to the editor.
   addAndMakeVisible(iamfbr_number_of_audio_elements_label);
   addAndMakeVisible(iamfbr_sampling_rate_label);
@@ -102,8 +109,11 @@ void PluginEditor::resized() {
       label_x, margin + label_height * 3, label_width, label_height);
   iamfbr_number_of_audio_elements_label.setBounds(
       label_x, margin + label_height * 4, label_width, label_height);
+  host_bus_width_too_small_label.setBounds(
+      margin, margin * 2 + label_height * 5, getWidth() - 2 * margin,
+      label_height);
 
-  logWindow.setBounds(margin, margin * 2 + label_height * 5,
+  logWindow.setBounds(margin, margin * 2 + label_height * 6,
                       getWidth() - 2 * margin,
                       getHeight() - 3 * margin - label_height * 5);
 }
@@ -140,4 +150,6 @@ void PluginEditor::timerCallback() {
       "Number of output channels: " +
           juce::String(processorRef.iamfbr_->GetNumberOfOutputChannels()),
       juce::dontSendNotification);
+
+  host_bus_width_too_small_label.setVisible(processorRef.getBusWidthTooSmall());
 }

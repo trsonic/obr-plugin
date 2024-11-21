@@ -8,8 +8,8 @@
 #include "ipps.h"
 #endif
 
-class PluginProcessor : public juce::AudioProcessor
-    , public juce::AudioProcessorValueTreeState::Listener {
+class PluginProcessor : public juce::AudioProcessor,
+                        public juce::AudioProcessorValueTreeState::Listener {
  public:
   PluginProcessor();
   ~PluginProcessor() override = default;
@@ -44,13 +44,17 @@ class PluginProcessor : public juce::AudioProcessor
   void removeLastAudioElement();
   void removeAllAudioElements();
 
-  void parameterChanged(const juce::String& parameterID, float newValue) override;
+  void parameterChanged(const juce::String& parameterID,
+                        float newValue) override;
   juce::AudioProcessorValueTreeState parameters;
+
+  bool getBusWidthTooSmall() const { return bus_width_too_small; }
 
  private:
   juce::UndoManager undo_manager;
-
-  static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+  bool bus_width_too_small = false;
+  static juce::AudioProcessorValueTreeState::ParameterLayout
+  createParameterLayout();
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginProcessor)
 };
