@@ -65,7 +65,7 @@ void PluginProcessor::changeProgramName(int index,
 
 //==============================================================================
 void PluginProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {
-  iamfbr_ = std::make_unique<iamfbr::IamfbrImpl>(samplesPerBlock, sampleRate);
+  iamfbr_ = std::make_unique<obr::ObrImpl>(samplesPerBlock, sampleRate);
 
   auto value =
       parameters.getParameter("audio_element_type")->getCurrentValueAsText();
@@ -126,8 +126,8 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float>& buffer,
   }
 
   // Declare input and output buffers.
-  iamfbr::AudioBuffer input_buffer(numInputChannels, numSamples);
-  iamfbr::AudioBuffer output_buffer(numOutputChannels, numSamples);
+  obr::AudioBuffer input_buffer(numInputChannels, numSamples);
+  obr::AudioBuffer output_buffer(numOutputChannels, numSamples);
 
   // Copy data from juce::AudioBuffer to iamfbr::AudioBuffer.
   for (size_t channel = 0; channel < numInputChannels; ++channel) {
@@ -177,6 +177,23 @@ void PluginProcessor::setStateInformation(const void* data, int sizeInBytes) {
       parameters.replaceState(juce::ValueTree::fromXml(*xmlState));
 }
 
+void PluginProcessor::oscMessageReceived(const juce::OSCMessage& message) {
+  if (message.getAddressPattern().toString() == "/quaternion" &&
+      message.size() == 4) {
+    qW = message[0].getFloat32();
+    qX = message[1].getFloat32();
+    qY = message[2].getFloat32();
+    qZ = -message[3].getFloat32();
+
+    // iamfbr_->SetHeadRotation(qW, qX, qY, qZ);
+  }
+}
+
+void PluginProcessor::oscBundleReceived(const juce::OSCBundle& bundle) {
+  const juce::OSCBundle::Element& elem = bundle[0];
+  oscMessageReceived(elem.getMessage());
+}
+
 //==============================================================================
 // This creates new instances of the plugin..
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
@@ -190,7 +207,7 @@ void PluginProcessor::setAudioElementType(std::string audio_element_type) {
 
     // Add audio element to the renderer.
     auto status = iamfbr_->AddAudioElement(
-        iamfbr::GetAudioElementTypeFromStr(audio_element_type).value());
+        obr::GetAudioElementTypeFromStr(audio_element_type).value());
 
     if (status.ok()) {
       DBG("Added audio element: " + audio_element_type);
@@ -238,7 +255,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout
 PluginProcessor::createParameterLayout() {
   juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
-  auto available_types = iamfbr::GetAvailableAudioElementTypesAsStr();
+  auto available_types = obr::GetAvailableAudioElementTypesAsStr();
   juce::StringArray stringArray;
   for (const auto& type : available_types) {
     stringArray.add(type);
@@ -249,4 +266,18 @@ PluginProcessor::createParameterLayout() {
       stringArray, 0));
 
   return layout;
+}
+
+void PluginProcessor::connectOSC(bool toBeConnected) {
+  if (toBeConnected) {
+    if (juce::OSCReceiver::connect(12345)) {
+      DBG("Connected to UDP port 12345.");
+    } else {
+      DBG("Error: could not connect to UDP port 12345.");
+    }
+    juce::OSCReceiver::addListener(this);
+  } else {
+    juce::OSCReceiver::disconnect();
+    juce::OSCReceiver::removeListener(this);
+  }
 }

@@ -102,7 +102,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(absl)
 
 # Add iamfbr library.
-add_subdirectory("../iamfbr" "iamfbr")
+add_subdirectory("../iamfbr" "obr")
 include_directories("../iamfbr")
 
 # Manually list all .h and .cpp files for the plugin
@@ -151,6 +151,7 @@ target_link_libraries(SharedCode
         juce_audio_utils
         juce_audio_processors
         juce_dsp
+        juce_osc
         juce_gui_basics
         juce_gui_extra
         juce::juce_recommended_config_flags
@@ -160,7 +161,7 @@ target_link_libraries(SharedCode
 # Link the JUCE plugin targets our SharedCode target
 target_link_libraries("${PROJECT_NAME}" PRIVATE
         SharedCode
-        iamfbr
+        obr
         absl::status
 )
 

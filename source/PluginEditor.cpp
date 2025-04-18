@@ -25,7 +25,7 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   select_audio_element_button.setButtonText("Select Audio Element Type");
   select_audio_element_button.onClick = [this] {
     // Get available audio element types.
-    auto audio_element_types = iamfbr::GetAvailableAudioElementTypesAsStr();
+    auto audio_element_types = obr::GetAvailableAudioElementTypesAsStr();
     juce::PopupMenu add_audio_element_menu;
     for (size_t i = 0; i < audio_element_types.size(); ++i) {
       add_audio_element_menu.addItem((int)(i + 1), audio_element_types[i]);
@@ -37,7 +37,7 @@ PluginEditor::PluginEditor(PluginProcessor& p)
             DBG("Selection dismissed.");
           } else {
             std::string selected_type =
-                iamfbr::GetAvailableAudioElementTypesAsStr()
+                obr::GetAvailableAudioElementTypesAsStr()
                     [static_cast<size_t>(result - 1)];
 
             // Add audio element to the renderer.
@@ -50,6 +50,24 @@ PluginEditor::PluginEditor(PluginProcessor& p)
         });
   };
 
+  // Set up 'Head Tracking Enabled' toggle button.
+  addAndMakeVisible(head_tracking_enabled_toggle_button);
+  head_tracking_enabled_toggle_button.setButtonText("Enable Head Tracking");
+  head_tracking_enabled_toggle_button.onClick = [this] {
+    // Toggle head tracking.
+//    processorRef.iamfbr_->EnableHeadTracking(
+//        head_tracking_enabled_toggle_button.getToggleState());
+    if (head_tracking_enabled_toggle_button.getToggleState()) {
+      processorRef.connectOSC(true);
+    } else {
+      processorRef.connectOSC(false);
+    }
+  };
+
+  // Set up 'Head Orientation' label.
+  addAndMakeVisible(head_orientation_label);
+  head_orientation_label.setText("nothing set yet", juce::dontSendNotification);
+
   // Add log window.
   logWindow.setMultiLine(true, false);
   logWindow.setReadOnly(true);
@@ -59,7 +77,8 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   addAndMakeVisible(logWindow);
 
   host_bus_width_too_small_label.setText(
-      "Host bus width is too small for the number of required input/output channels.",
+      "Host bus width is too small for the number of required input/output "
+      "channels.",
       juce::dontSendNotification);
   host_bus_width_too_small_label.setColour(juce::Label::textColourId,
                                            juce::Colours::red);
@@ -85,16 +104,26 @@ void PluginEditor::paint(juce::Graphics& g) {
 
   g.setFont(24.0f);
   g.setColour(getLookAndFeel().findColour(juce::Label::textColourId));
-  g.drawText("IAMF Binaural Renderer", 0, 0, getWidth() / 2, 50,
-             juce::Justification::centred);
+  g.drawText("IAMFBR", 10, 10, getWidth() / 2, 25, juce::Justification::left);
+
+  g.setFont(12.0f);
+  g.drawMultiLineText(
+      juce::String("Build date and time:\n" + juce::String(__DATE__) + " " +
+                   juce::String(__TIME__)),
+      getWidth() / 2 - 150, 20, 150, juce::Justification::left);
 }
 
 void PluginEditor::resized() {
   int margin = 10;
   int button_width = (getWidth() - 3 * margin) / 2;
   int button_height = 50;
-  select_audio_element_button.setBounds(margin, 50 + margin, button_width,
+  select_audio_element_button.setBounds(margin, 30 + margin, button_width,
                                         button_height);
+
+  head_tracking_enabled_toggle_button.setBounds(margin, 80 + margin, 175, 25);
+
+  head_orientation_label.setBounds(margin + 175, 80 + margin,
+                                   button_width - 175, 25);
 
   int label_width = 400;
   int label_height = 20;
@@ -110,10 +139,9 @@ void PluginEditor::resized() {
   iamfbr_number_of_audio_elements_label.setBounds(
       label_x, margin + label_height * 4, label_width, label_height);
   host_bus_width_too_small_label.setBounds(
-      margin, margin * 2 + label_height * 5, getWidth() - 2 * margin,
-      label_height);
+      margin, margin + label_height * 5, getWidth() - 2 * margin, label_height);
 
-  logWindow.setBounds(margin, margin * 2 + label_height * 6,
+  logWindow.setBounds(margin, margin + label_height * 6,
                       getWidth() - 2 * margin,
                       getHeight() - 3 * margin - label_height * 5);
 }
@@ -152,4 +180,11 @@ void PluginEditor::timerCallback() {
       juce::dontSendNotification);
 
   host_bus_width_too_small_label.setVisible(processorRef.getBusWidthTooSmall());
+
+  head_orientation_label.setText(
+      "qW: " + juce::String(processorRef.qW, 2) +
+          " qX: " + juce::String(processorRef.qX, 2) +
+          " qY: " + juce::String(processorRef.qY, 2) +
+          " qZ: " + juce::String(processorRef.qZ, 2),
+      juce::dontSendNotification);
 }
