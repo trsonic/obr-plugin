@@ -13,7 +13,7 @@ include(PamplejuceMacOS)
 # This is the internal name of the project and the name of JUCE's shared code target
 # Note: This cannot have spaces (it may be 2024, but you can't have it all!)
 # Worry not, JUCE's PRODUCT_NAME can have spaces (and is what DAWs display)
-set(PROJECT_NAME "IAMFBR")
+set(PROJECT_NAME "OBR")
 
 # Worry not, JUCE's PRODUCT_NAME can have spaces (and is what DAWs will display)
 # You can also just have it be the same thing as PROJECT_NAME
@@ -21,13 +21,13 @@ set(PROJECT_NAME "IAMFBR")
 #   set(PROJECT_NAME "MyPlugin_v${MAJOR_VERSION}")
 # Doing so enables major versions to show up in IDEs and DAWs as separate plugins
 # allowing you to change parameters and behavior without breaking existing user projects
-set(PRODUCT_NAME "IAMF Binaural Renderer")
+set(PRODUCT_NAME "Open Binaural Renderer")
 
 # Change me! Used for the MacOS bundle name and Installers
 set(COMPANY_NAME "nvsonic.io")
 
 # Change me! Used for the MacOS bundle identifier (and signing)
-set(BUNDLE_ID "com.nvsonic.IAMFBR")
+set(BUNDLE_ID "com.nvsonic.OBR")
 
 # Change me! Set the plugin formats you want built
 # Valid choices: AAX Unity VST VST3 AU AUv3 Standalone
@@ -51,7 +51,7 @@ add_subdirectory(JUCE)
 # juce_add_module(modules/my_module)
 
 # This adds the melatonin inspector module
-add_subdirectory(modules/melatonin_inspector)
+#add_subdirectory(modules/melatonin_inspector)
 
 # See `docs/CMake API.md` in the JUCE repo for all config options
 juce_add_plugin("${PROJECT_NAME}"
@@ -101,9 +101,9 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(absl)
 
-# Add iamfbr library.
-add_subdirectory("../iamfbr" "obr")
-include_directories("../iamfbr")
+# Add obr library.
+add_subdirectory("obr")
+include_directories("obr")
 
 # Manually list all .h and .cpp files for the plugin
 # If you are like me, you'll use globs for your sanity.
@@ -136,7 +136,7 @@ target_compile_definitions(SharedCode
         VERSION="${CURRENT_VERSION}"
 
         # JucePlugin_Name is for some reason doesn't use the nicer PRODUCT_NAME
-        PRODUCT_NAME_WITHOUT_VERSION="IAMFBR"
+        PRODUCT_NAME_WITHOUT_VERSION="OBR"
 )
 
 # Link to any other modules you added (with juce_add_module) here!
@@ -147,7 +147,7 @@ target_compile_definitions(SharedCode
 target_link_libraries(SharedCode
         INTERFACE
         Assets
-        melatonin_inspector
+#        melatonin_inspector
         juce_audio_utils
         juce_audio_processors
         juce_dsp

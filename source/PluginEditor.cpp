@@ -55,8 +55,8 @@ PluginEditor::PluginEditor(PluginProcessor& p)
   head_tracking_enabled_toggle_button.setButtonText("Enable Head Tracking");
   head_tracking_enabled_toggle_button.onClick = [this] {
     // Toggle head tracking.
-//    processorRef.iamfbr_->EnableHeadTracking(
-//        head_tracking_enabled_toggle_button.getToggleState());
+    processorRef.iamfbr_->EnableHeadTracking(
+        head_tracking_enabled_toggle_button.getToggleState());
     if (head_tracking_enabled_toggle_button.getToggleState()) {
       processorRef.connectOSC(true);
     } else {

@@ -185,7 +185,7 @@ void PluginProcessor::oscMessageReceived(const juce::OSCMessage& message) {
     qY = message[2].getFloat32();
     qZ = -message[3].getFloat32();
 
-    // iamfbr_->SetHeadRotation(qW, qX, qY, qZ);
+     iamfbr_->SetHeadRotation(qW, qX, qY, qZ);
   }
 }
 
