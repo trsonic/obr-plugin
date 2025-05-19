@@ -13,3 +13,4 @@
 [submodule "obr"]
 	path = obr
 	url = https://github.com/trsonic/obr
+	branch = master
