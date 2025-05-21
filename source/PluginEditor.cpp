@@ -104,7 +104,7 @@ void PluginEditor::paint(juce::Graphics& g) {
 
   g.setFont(24.0f);
   g.setColour(getLookAndFeel().findColour(juce::Label::textColourId));
-  g.drawText("IAMFBR", 10, 10, getWidth() / 2, 25, juce::Justification::left);
+  g.drawText("OBR", 10, 10, getWidth() / 2, 25, juce::Justification::left);
 
   g.setFont(12.0f);
   g.drawMultiLineText(
